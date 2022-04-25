@@ -1,0 +1,25 @@
+id,landSystem,livestock density (BGS per km2),intensity,landUse,colorCode,comment ziga
+0,Cropland; extensive with few livestock,33,1,Cropland,#ffbecc,
+1,"Cropland; extensive with bovines, goats & sheep",198,2,Cropland,#ffdab0,high livestock density
+2,Cropland; medium intensive with few livestock,22,2,Cropland,#ffbd80,
+3,"Cropland; medium intensive with bovines, goats & sheep",259,3,Cropland,#ffad66,high livestock density
+4,Cropland; intensive with few livestock,24,3,Cropland,#fa9039,
+5,"Cropland; intensive with bovines, goats & sheep",247,3,Cropland,#f58625,high livestock density
+6,"Mosaic cropland and grassland with bovines, goats & sheep",187,3,M.Cropland-Grassland,#547fa1,high livestock density
+7,Mosaic cropland (extensive) and grassland with few livestock,40,1,M.Cropland-Grassland,#d3e5e9,
+8,Mosaic cropland (medium intensive) and grassland with few livestock,26,2,M.Cropland-Grassland,#a5bfce,
+9,Mosaic cropland (intensive) and grassland with few livestock,32,3,M.Cropland-Grassland,#7d9fb8,
+10,Mosaic cropland (extensive) and forest with few livestock,48,1,M.Cropland-Forest,#e5d5f2,
+11,Mosaic cropland (medium intensive) and forest with few livestock,34,2,M.Cropland-Forest,#b393c2,
+12,Mosaic cropland (intensive) and forest with few livestock,33,3,M.Cropland-Forest,#865a97,
+13,Dense forest,4,0,Forest,#267300,
+14,Open forest with few livestock,10,1,Forest,#70a800,
+15,Mosaic grassland and forest,21,1,M.Grassland-Forest,#89cd66,
+16,Mosaic grassland and bare,17,1,M.Grassland-Bare,#c9d7c2,
+17,Natural grassland,0,0,Grassland,#d9e8bc,
+18,Grassland with few livestock,21,0,Grassland,#c7e371,
+19,"Grassland with bovines, goats and sheep",204,3,Grassland,#cdcd66,high livestock density
+20,Bare,0,0,Bare,#cccccc,
+21,Bare with few livestock,22,1,Bare,#9c9c9c,
+22,Peri-urban & villages,60,3,Urban,#fe0000,
+23,Urban,33,4,Urban,#a80000,
