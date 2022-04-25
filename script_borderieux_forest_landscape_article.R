@@ -13,7 +13,7 @@ library(rtree)
 #### Loading the survey and covariable database  ####
 
 ## loading the NFI: survey location, canopy cover, dendrometric variable
-setwd("~/Article_Landscape_Forest_cool_com")
+setwd("~/Article_Landscape_Forest_Cool_Comm")
 source("script_data_loading.R")
 plots_data<-placette
 plots_data[,ident:=as.character(idp)]# idp is the plot id of NFI plots
@@ -901,7 +901,6 @@ summary_all_tile<-merge(summary_all_tile,refr_lus,by="LUS")
 lus_plot<-ggplot(summary_extrapo_ok_tile[LUS!=c("Bare","Bare with few livestock"),],aes(y=reorder(LUS,-order),yend=reorder(LUS,-order),x= Mean_forest_Q10,xend=Mean_forest_Q90,color=LUS))+geom_segment(show.legend = F,size=3)+scale_color_manual(values=refr_lus$colorCode,breaks=refr_lus$LUS)+theme_bw()+theme(axis.line.y=element_blank())+geom_text(mapping=aes(x=Mean_forest_Q90+6,label=N_tile),color="black")+scale_x_continuous(limits = c(0,105),sec.axis = sec_axis(~ . *whole_buffer, name = "Community Inferred Temperature cooled (C°)"))+xlab("Landscape forest cover in a 1km buffer (%)")+ylab("Land systems")
 lus_plot_extrapo<-ggplot(summary_all_tile[LUS!=c("Bare","Bare with few livestock"),],aes(y=reorder(LUS,-order),yend=reorder(LUS,-order),x= Mean_forest_Q10,xend=Mean_forest_Q90,color=LUS))+geom_segment(show.legend = F,size=3)+scale_color_manual(values=refr_lus$colorCode,breaks=refr_lus$LUS)+theme_bw()+theme(axis.line.y=element_blank())+geom_text(mapping=aes(x=Mean_forest_Q90+6,label=N_tile),color="black")+scale_x_continuous(limits = c(0,105),sec.axis = sec_axis(~ . *whole_buffer, name = "Community Inferred Temperature cooled (C°)"))+xlab("Landscape forest cover in a 1km buffer (%)")+ylab("Land systems")
 
-setwd("~/Article_Landscape_Forest_cool_com")
 
 tiff(file.path("results_and_figures","fig_LUS_bars_suppl.tif"),width=850,height=400,res=100)
 
@@ -934,7 +933,6 @@ out_fig_4_maps_lus<-ggarrange(out_map_lus_cow ,
                               font.label = list(size=16 ,color = "black", face = "bold", family = NULL))
 
 
-setwd("~/AdapFor_analysis")
 
 ## write the figure
 reso<-2
