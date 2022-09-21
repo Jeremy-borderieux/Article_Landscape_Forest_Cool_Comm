@@ -13,7 +13,7 @@ library(rtree)
 #### Loading the survey and covariable database  ####
 
 ## loading the NFI: survey location, canopy cover, dendrometric variable
-setwd("~/Article_Landscape_Forest_Cool_Comm")
+# setwd("~/Article_Landscape_Forest_Cool_Comm")
 source("script_data_loading.R")
 plots_data<-placette
 plots_data[,ident:=as.character(idp)]# idp is the plot id of NFI plots
@@ -34,13 +34,13 @@ surveys_data<-merge(surveys_data,sp_it_climplant[,c("lb_nom_final","YearMeanMean
 surveys_data[,idp:=as.numeric(ident)]
 
 # aggregating the survey to have a Community Inferred Temperature at the plot level (community)
-cit_climplant<-surveys_data[tree!=1 & !nom_espece%in% c("Sambucus nigra","Sambucus racemosa","Ligustrum vulgare","Crataegus monogyna","Crataegus laevigata"),## remove of the tree species and the main woody species
-                          .(cit_climplant=mean(YearMeanMean,na.rm=T),median_climplant=mean(YearMeanMedian,na.rm=T),
-                            cit_tmax_climplant=mean(YearMaxMean,na.rm=T),
-                            cit_climplant_05=mean(YearMean05,na.rm=T),
-                            cit_climplant_95=mean(YearMean95,na.rm=T),
-                            cit_ecoplant=mean(topt,na.rm=T),
-                            cit_ecoplant_picq=mean(topt_picq,na.rm=T),
+cti_climplant<-surveys_data[tree!=1 & !nom_espece%in% c("Sambucus nigra","Sambucus racemosa","Ligustrum vulgare","Crataegus monogyna","Crataegus laevigata"),## remove of the tree species and the main woody species
+                          .(cti_climplant=mean(YearMeanMean,na.rm=T),median_climplant=mean(YearMeanMedian,na.rm=T),
+                            cti_tmax_climplant=mean(YearMaxMean,na.rm=T),
+                            cti_climplant_05=mean(YearMean05,na.rm=T),
+                            cti_climplant_95=mean(YearMean95,na.rm=T),
+                            cti_ecoplant=mean(topt,na.rm=T),
+                            cti_ecoplant_picq=mean(topt_picq,na.rm=T),
                             n_sp_climplant=sum(!is.na(YearMeanMean)),
                             mean_area=mean(Area,na.rm=T),
                             freq_for_mean=mean(indFor_Freq,na.rm=T),
@@ -64,7 +64,7 @@ plots_data<-merge(plots_data,alti,by="idp",all.x=T)
 plots_data[,alti:=ifelse(is.na(alti),elevation,alti)]
 
 ## get the CIt data
-plots_data<-merge(plots_data,cit_climplant,by="idp",all.x=T)
+plots_data<-merge(plots_data,cti_climplant,by="idp",all.x=T)
 
 
 ## Landscape metrics calculated with a 20m meter resolution forest map of France (IGN), see main text
@@ -85,7 +85,7 @@ plots_data<-merge(plots_data,dendro,by="idp",all.x=T)
 plots_data<-merge(plots_data,couvert[,.(couverttot =couverttot [1]),by=idp],by="idp",all.x=T)
 
 plots_data<-plots_data[!is.na(tmoy_v2b_6186_13),]# some plots are outsid of the climatic grid
-plots_data<-plots_data[!is.na(cit_climplant),]# some plots lacks any species with a thermal optimum
+plots_data<-plots_data[!is.na(cti_climplant),]# some plots lacks any species with a thermal optimum
 plots_data<-plots_data[gest_struct!="debois",]## the nfi classify deforested plots, we remove them
 
 
@@ -263,7 +263,7 @@ duets<-get_duet_optimal(plots_data_sf,# same spatial object
                         distance_tresh=5,# maximum distance of two points within a pair 
                         # compute pairwise differences within a pair of various variable
                         # here we compute forested- not_forested  (the order was set in get_distances())
-                        differences_to_compute=c("alti","cit_climplant","tmoy_v2b_9015_13","mean_L","mean_pH","mean_pH","mean_N","annee","pland_1000m","couverttot","basal_area","Ntot","cit_ecoplant","cit_ecoplant_picq","distance_edge"),
+                        differences_to_compute=c("alti","cti_climplant","tmoy_v2b_9015_13","mean_L","mean_pH","mean_pH","mean_N","annee","pland_1000m","couverttot","basal_area","Ntot","cti_ecoplant","cti_ecoplant_picq","distance_edge"),
                         differences_tresh =   c(50,rep(0,14)))# vector of same length as differences_to_compute, will exclude pairs with an absolute value of the difference higher than the threshold (0=no treshold)
 
 summary(duets)
@@ -299,13 +299,28 @@ plots_data_duets_info$edge_info_duets<-plots_data_duets_info[,rep(sum(!is.na(dis
 
 
 ## figure 2: histogram of the differences within a pair
-duets[,Forested_landscape:=ifelse(cit_climplant_dif<0,"Cooler CIT","Warmer CIT")]
-fig_2_out<-ggplot(duets,aes(x= cit_climplant_dif,fill= Forested_landscape))+theme_bw()+
+duets[,Forested_landscape:=ifelse(cti_climplant_dif<0,"Cooler CTI","Warmer CTI")]
+
+fig_2_out<-ggplot(duets,aes(x= cti_climplant_dif,fill= Forested_landscape))+theme_bw()+
   geom_histogram(color="black",binwidth = 0.25,origin=0)+
-  geom_vline(xintercept = mean(duets$cit_climplant_dif),col="black",lwd=1,linetype=2)+geom_segment(aes(x=0,xend=0,y=0,yend=254),col="grey20",lwd=1)+
+  geom_vline(xintercept = mean(duets$cti_climplant_dif),col="black",lwd=1,linetype=2)+geom_segment(aes(x=0,xend=0,y=0,yend=254),col="grey20",lwd=1)+
   scale_fill_manual(values=c("lightblue3","lightcoral"))+
-  ylab("Number of plot pairs")+xlab("∆CIT: Forested CIT  -  Non forested CIT ")+labs(fill = "Forested \nlandscape")+scale_y_continuous(limits=c(0,300))+scale_x_continuous(labels = paste0(c(-4,-2,0,2,4) , "°C"))+
-  annotate("text", x = -1.25, y = 295, label = paste0("Mean ∆CIT",round(mean(duets$cit_climplant_dif),2),"°C"))
+  ylab("Number of plot pairs")+xlab("∆CTI: Forested CTI  -  Non forested CTI ")+labs(fill = "Forested \nlandscape")+scale_y_continuous(limits=c(0,300))+scale_x_continuous(labels = paste0(c(-4,-2,0,2,4) , "°C"))+
+  annotate("text", x = -1.25, y = 295, label = paste0("Mean ∆CTI",round(mean(duets$cti_climplant_dif),2),"°C"))
+
+max_col<-1.5
+fig_2_out<-ggplot(duets,aes(x= cti_climplant_dif))+theme_bw()+
+  geom_histogram(mapping=aes(color=ifelse(..x..>3,NA,"no_na"),fill=ifelse(..x..>max_col,max_col,ifelse(..x..< -max_col,-max_col,..x..))),binwidth = 0.25,origin=0,show.legend = F)+
+  geom_vline(xintercept = mean(duets$cti_climplant_dif),col="black",lwd=1,linetype=1)+geom_vline(xintercept = 0,col="grey20",lwd=1,lty=2)+
+  scale_color_manual(values=c("grey10","red"))+
+  scale_fill_gradient2(low = "lightskyblue3",mid="grey99",high="lightcoral",midpoint=0,limits=c(-max_col,max_col),na.value="blue")+
+  ylab("Number of plot pairs")+xlab("∆CTI: Forested CTI  -  Non forested CTI ")+scale_y_continuous(limits=c(0,300))+scale_x_continuous(limits=c(-4,4),labels = paste0(c(-4,-2,0,2,4) , "°C"))+
+  annotate("text", x = -1.25, y = 295, label = paste0("Mean ∆CTI",round(mean(duets$cti_climplant_dif),2),"°C"))+
+  annotate("text", x = -4, y = 95, label = "CTI lower in \nforested landscape",hjust = 0)+
+  annotate("text", x = 2, y = 95, label = "CTI higher in \nforested landscape",hjust = 0)+
+  annotate("segment", x = 0, y = 287,xend=mean(duets$cti_climplant_dif),yend=287,lty=2, lwd=0.5,arrow=arrow(angle=25,length=unit(0.12,"inches")))+
+  annotate("segment", x = mean(duets$cti_climplant_dif)+0.01, y = 287,xend=mean(duets$cti_climplant_dif),yend=287,lty=1,lwd=0.5, arrow=arrow(angle=25,length=unit(0.12,"inches")))
+
 
 
 reso<-2
@@ -316,14 +331,15 @@ fig_2_out
 dev.off()
 
 ## small numbers for result core text main text
-mean(duets$cit_climplant_dif)
-sd(duets$cit_climplant_dif)
-sum(duets$cit_climplant_dif<0)/nrow(duets)
-sum(duets$cit_climplant_dif< (-1))/nrow(duets)
+mean(duets$cti_climplant_dif)
+sd(duets$cti_climplant_dif)
+sum(duets$cti_climplant_dif<0)/nrow(duets)
+sum(duets$cti_climplant_dif< (-1))/nrow(duets)
+1-sum(duets$cti_climplant_dif< (1))/nrow(duets)
+1-sum(duets$cti_climplant_dif< (0))/nrow(duets)
+wilcox.test(duets$cti_climplant_dif)
 
-wilcox.test(duets$cit_climplant_dif)
-
-
+summary(duets$cti_climplant_dif)
 
 
 ## linear model for analysis
@@ -332,22 +348,46 @@ n_full_model<-nrow(duets)
 n_cover_model<-nrow(duets[!is.na(couverttot_dif),])
 n_edge_model<-nrow(duets[!is.na(distance_edge_dif),])
 
-scope<-c("cit_climplant_dif","tmoy_v2b_9015_13_dif","mean_L_dif","mean_pH_dif","mean_N_dif","annee_dif","alti_dif")
+scope<-c("cti_climplant_dif","tmoy_v2b_9015_13_dif","mean_L_dif","mean_pH_dif","mean_N_dif","annee_dif","alti_dif")
 
-lm_duets_pair<-lm(cit_climplant_dif~1,data=duets[,..scope],y=T,x=T)
-lm_duets_pair_2<-lm(cit_climplant_dif~.,data=duets[,..scope],y=T,x=T)
+lm_duets_pair<-lm(cti_climplant_dif~1,data=duets[,..scope],y=T,x=T)
+lm_duets_pair_2<-lm(cti_climplant_dif~.,data=duets[,..scope],y=T,x=T)
 
 step_pair<-step(lm_duets_pair,direction="both",scope=list(upper=lm_duets_pair_2,lower=lm_duets_pair))
 summary(step_pair)
 ## all the variable are included, we run the submodels with all the variable, and the addition of canopy cover or distance to the edge
-lm_duets_pair<-lm(cit_climplant_dif~alti_dif+tmoy_v2b_9015_13_dif+mean_L_dif+mean_pH_dif+mean_N_dif+annee_dif,data=duets,y=T,x=T)
-lm_cover<-lm(cit_climplant_dif~alti_dif+tmoy_v2b_9015_13_dif+mean_L_dif+mean_pH_dif+mean_N_dif+annee_dif+couverttot_dif,data=duets,y=T,x=T)
-lm_edge<-lm(cit_climplant_dif~alti_dif+tmoy_v2b_9015_13_dif+mean_L_dif+mean_pH_dif+mean_N_dif+annee_dif+distance_edge_dif,data=duets,y=T,x=T)
-
+lm_duets_pair<-lm(cti_climplant_dif~alti_dif+tmoy_v2b_9015_13_dif+mean_L_dif+mean_pH_dif+mean_N_dif+annee_dif,data=duets_env,y=T,x=T)
+lm_cover<-lm(cti_climplant_dif~alti_dif+tmoy_v2b_9015_13_dif+mean_L_dif+mean_pH_dif+mean_N_dif+annee_dif+couverttot_dif,data=duets_env,y=T,x=T)
+lm_edge<-lm(cti_climplant_dif~alti_dif+tmoy_v2b_9015_13_dif+mean_L_dif+mean_pH_dif+mean_N_dif+annee_dif+distance_edge_dif,data=duets_env,y=T,x=T)
+summary(lm_duets_pair);summary(lm_cover);summary(lm_edge)
 
 summ<-summary(lm_duets_pair)
 summ
 coef(summ)
+
+### try new data analysis, reviews from GEB
+## the editor concern was : regression toward the mean and also wanted to try absolute CTI or 
+## MAT as a covariable of the model
+
+
+duets_env<-merge(duets,plots_data,by.x="idp1",by.y="idp")
+duets_env[,dif_from_mean_cti_climplant:=scale(cti_climplant)]
+
+duets_env<-merge(duets_env,plots_data_duets_info[,.(ref_duet_climplant=mean(cti_climplant),ref_duet_tmoy=mean(tmoy_v2b_9015_13)),by=duet_id],by="duet_id")
+duets_env[,dif_from_ref_mean_cti_climplant:=scale(ref_duet_climplant)]
+duets_env[,dif_from_ref_mean_tmoy:=ref_duet_tmoy-mean(ref_duet_tmoy)]
+
+lm_duets_pair<-lm(cti_climplant_dif~alti_dif+dif_from_mean_cti_climplant+dif_from_ref_mean_tmoy+tmoy_v2b_9015_13_dif+mean_L_dif+mean_pH_dif+mean_N_dif+annee_dif,data=duets_env,y=T,x=T)
+lm_cover<-lm(cti_climplant_dif~alti_dif+dif_from_mean_cti_climplant+dif_from_ref_mean_tmoy+tmoy_v2b_9015_13_dif+mean_L_dif+mean_pH_dif+mean_N_dif+annee_dif+couverttot_dif,data=duets_env,y=T,x=T)
+lm_edge<-lm(cti_climplant_dif~alti_dif+dif_from_mean_cti_climplant+dif_from_ref_mean_tmoy+tmoy_v2b_9015_13_dif+mean_L_dif+mean_pH_dif+mean_N_dif+annee_dif+distance_edge_dif,data=duets_env,y=T,x=T)
+summary(lm_duets_pair);summary(lm_cover);summary(lm_edge)
+
+ggplot(duets_env,aes(x=dif_from_ref_mean_cti_climplant,y=cti_climplant_dif))+geom_point(aes(color=Forested_landscape))+geom_smooth()+theme_bw()
+ggplot(duets_env,aes(x=dif_from_mean_cti_climplant,y=cti_climplant_dif))+geom_point(aes(color=Forested_landscape))+geom_smooth()+theme_bw()
+ggplot(duets_env,aes(x=dif_from_mean_cti_climplant,y=cti_climplant_dif))+geom_point(aes(color=Forested_landscape))+geom_smooth(method="lm",color="black")+theme_bw()+scale_color_manual(values=c("royalblue","firebrick"))
+ggplot(duets_env,aes(x=dif_from_ref_mean_tmoy,y=cti_climplant_dif))+geom_point(aes(color=Forested_landscape))+geom_smooth()+theme_bw()
+ggplot(duets_env,aes(x=dif_from_ref_mean_tmoy,y=dif_from_ref_mean_cti_climplant,color=cti_climplant_dif))+geom_point()+geom_smooth()+theme_bw()+scale_color_gradient2(mid = "grey90",low="blue",high='red')
+
 
 ## checking the residuals
 vif(step_pair)
@@ -357,12 +397,17 @@ hist(res_pairs,nc=40,col="lightgrey")
 duets$residuals<-res_pairs
 
 
-ggplot(duets,aes(y=cit_climplant_dif,x=residuals+coef(lm_duets_pair)[1]))+theme_bw()+geom_point(size=0.5)+geom_smooth(method="lm")
+ggplot(duets,aes(x=alti_dif,y=residuals))+theme_bw()+geom_point(size=0.5)+geom_smooth(method="lm")
+
+
+ggplot(duets,aes(y=cti_climplant_dif,x=residuals+coef(lm_duets_pair)[1]))+theme_bw()+geom_point(size=0.5)+geom_smooth(method="gam")+geom_abline(slope=1,intercept = 0,lty=2)+labs(x="Residuals + intercept")
+
 ggplot(duets,aes(x=dist_duet,y=residuals))+theme_bw()+geom_point(size=0.5)+geom_smooth()
 ggplot(duets,aes(x=alti_dif,y=residuals))+theme_bw()+geom_point(size=0.5)+geom_smooth()
 ggplot(duets,aes(x=tmoy_v2b_9015_13_dif,y=residuals))+theme_bw()+geom_point(size=0.5)+geom_smooth(method="lm")
 ggplot(duets,aes(x=mean_L_dif,y=residuals))+theme_bw()+geom_point(size=0.5)+geom_smooth()
-ggplot(duets,aes(x=mean_pH_dif,y=residuals))+theme_bw()+geom_point(size=0.5)+geom_smooth()
+ggplot(duets,aes(x=mean_pH_dif,y=cti_climplant_dif))+theme_bw()+geom_point(size=0.5)+geom_smooth(method="gam")
+ggplot(duets,aes(x=mean_pH_dif,y=residuals))+theme_bw()+geom_point(size=0.5)+geom_smooth(method="gam")
 ggplot(duets,aes(x=mean_N_dif,y=residuals))+theme_bw()+geom_point(size=0.5)+geom_smooth(method="lm")
 ggplot(duets,aes(x=annee_dif,y=residuals))+theme_bw()+geom_point(size=0.5)+geom_smooth()
 ggplot(duets,aes(x=basal_area_dif,y=residuals))+theme_bw()+geom_point(size=0.5)+geom_smooth()
@@ -371,7 +416,7 @@ ggplot(duets,aes(x=distance_edge_dif,y=residuals))+theme_bw()+geom_point(size=0.
 
 
 ## some mean of differents environementale variables, for F and NF plots, to show the sampling balance
-plots_data_duets_info[,mean(cit_climplant),by=.(clust_studied)]
+plots_data_duets_info[,mean(cti_climplant),by=.(clust_studied)]
 
 plots_data_duets_info[,mean(tmoy_v2b_9015_13),by=.(clust_studied)]
 plots_data_duets_info[,quantile(tmoy_v2b_9015_13,probs=c(0.05,0.95)),by=.(clust_studied)]
@@ -427,8 +472,11 @@ write.table(final,file.path("results_and_figures","table_1_mat_met.csv"),sep=";"
 
 
 ## main text mat met, nb of species with topt and indicator value
-n_sp_biodind<-surveys_data[ident%in%plots_data_duets_info$idp  & tree==0,]
-length(unique(n_sp_biodind[!is.na(YearMeanMean),nom_espece]))
+surveys_data[,only_genre:=!grepl(" ",nom_espece)]
+n_sp_biodind<-surveys_data[ident%in%plots_data_duets_info$idp  & only_genre==FALSE & tree==0&  !nom_espece%in% c("Sambucus nigra","Sambucus racemosa","Ligustrum vulgare","Crataegus monogyna","Crataegus laevigata"),]
+
+length(unique(n_sp_biodind[,nom_espece]))#N of species
+length(unique(n_sp_biodind[!is.na(YearMeanMean),nom_espece]))# N of species included in CLimPlant 
 length(unique(n_sp_biodind[!is.na(pHopt),nom_espece]))
 length(unique(n_sp_biodind[!is.na(Nopt),nom_espece]))
 length(unique(n_sp_biodind[!is.na(Li),nom_espece]))
@@ -439,11 +487,17 @@ n_sp_biodind[,.(n_oc_topt=sum(!is.na(YearMeanMean))/.N,
                 n_oc_N=sum(!is.na(Nopt))/.N,
                 n_oc_L=sum(!is.na(Li))/.N),]
 
-summary(n_sp_biodind[ ,.(n_oc_topt=sum(!is.na(YearMeanMean)),
+number_occurences_bioind<-n_sp_biodind[ ,.(n_oc_topt=sum(!is.na(YearMeanMean)),
                                          prop_topt=sum(!is.na(YearMeanMean))/.N,
                                          n_oc_pH=sum(!is.na(pHopt)),
                                          n_oc_N=sum(!is.na(Nopt)),
-                                         n_oc_L=sum(!is.na(Li))),by=ident])# 14 sp in climplant on average
+                                         n_oc_L=sum(!is.na(Li)),
+                                         .N),by=ident]# 13 sp in climplant on average
+
+summary(number_occurences_bioind)
+sd(number_occurences_bioind$n_oc_topt)
+sd(number_occurences_bioind$prop_topt)
+
 
 ## table 2 : results
 
@@ -523,7 +577,7 @@ names(list_distances)<-buffers
 list_duets<-foreach(dist=list_distances,.combine = list,.multicombine = T,.packages = c("data.table","stringr","foreach","broman"))%dopar%{
   
   
-  res<-get_duet_optimal(plots_data_sf,dist,distance_tresh=5,differences_to_compute=c("alti","cit_climplant","tmoy_v2b_9015_13","mean_L","mean_pH","mean_pH","mean_N","annee","pland_1000m","couverttot","basal_area","Ntot","cit_ecoplant","cit_ecoplant_picq"),differences_tresh =   c(50,rep(0,13)))
+  res<-get_duet_optimal(plots_data_sf,dist,distance_tresh=5,differences_to_compute=c("alti","cti_climplant","tmoy_v2b_9015_13","mean_L","mean_pH","mean_pH","mean_N","annee","pland_1000m","couverttot","basal_area","Ntot","cti_ecoplant","cti_ecoplant_picq"),differences_tresh =   c(50,rep(0,13)))
   res
   
 }
@@ -543,14 +597,14 @@ list_duets<-readRDS(file.path("Data","saved_calculation","list_duets.RData"))
 
 ### this function reproduce the analysis for each new sets of duets
 analyse_one_duet_subset<-function(x,buff_min){
-  lm_duets<-lm(cit_climplant_dif~alti_dif+tmoy_v2b_9015_13_dif+mean_L_dif+mean_pH_dif+mean_N_dif+annee_dif,data=x,y=T,x=T)
-  topt_dif<-mean(x$cit_climplant_dif)
+  lm_duets<-lm(cti_climplant_dif~alti_dif+tmoy_v2b_9015_13_dif+mean_L_dif+mean_pH_dif+mean_N_dif+annee_dif,data=x,y=T,x=T)
+  topt_dif<-mean(x$cti_climplant_dif)
   var_landscape_dif<-mean(x$pland_1000m_dif)
   resu<-make_result_table(lm_duets)
   dt_eff_size<-t(data.table(resu$Effect_size))
   colnames(dt_eff_size)<-paste0("Eff_size_",resu$estimates)
   
-  whole_buffer<-mean(x$cit_climplant_dif)/mean(x$pland_1000m_dif)
+  whole_buffer<-mean(x$cti_climplant_dif)/mean(x$pland_1000m_dif)
   forested_ls_buffer<-coef(summary(lm_duets))[1,1]/mean(x$pland_1000m_dif)
   
   
@@ -570,7 +624,7 @@ res_dif<-foreach(buff=buffers,duets_different_buffer=list_duets,.combine = rbind
   multi_scale_results
 }
 
-res_dif[,buffer_width:=paste0("[",buff_min," : ",buff_min+20,"]")]
+res_dif[,buffer_width:=paste0("[",buff_min," : ",buff_min+20,"%]")]
 res_dif[,coef_thermo:=topt_dif/pland_dif]
 res_dif[,coef_land:=`Eff_size_(Intercept)`/pland_dif]
 summary(res_dif)
@@ -583,17 +637,17 @@ fig_3_out<-ggplot(res_dif,aes(x=buffer_width))+theme_bw()+
   geom_line(aes(y=Eff_size_mean_N_dif,color="Δ Ellenberg N",group=1),lwd=1.25)+geom_point(aes(y=Eff_size_mean_N_dif,fill="Δ Ellenberg N"),color="black",size=3,shape=24)+
   geom_line(aes(y=Eff_size_mean_pH_dif,color="Δ Bioindicated pH",group=1),lwd=1.25)+geom_point(aes(y=Eff_size_mean_pH_dif,fill="Δ Bioindicated pH"),color="black",size=3,shape=25)+
   geom_line(aes(y=`Eff_size_(Intercept)`,color="Forested landscape",group=1),lwd=1.25)+ geom_point(aes(y=`Eff_size_(Intercept)`,fill="Forested landscape"),color="black",size=3,shape=25)+
-  geom_line(aes(y=topt_dif,colour="Δ CIT",group=1),lwd=1.25)+ geom_point(aes(y=topt_dif,fill="Δ CIT"),size=3)+
-  geom_line(aes(y=Eff_size_alti_dif,colour="Marginal effects",group=1),lwd=1,linetype=2)+
-  geom_line(aes(y=Eff_size_mean_L_dif,colour="Marginal effects",group=1),lwd=1,linetype=2)+
-  geom_line(aes(y=Eff_size_annee_dif,colour="Marginal effects",group=1),lwd=1,linetype=2)+
-  geom_line(aes(y=Eff_size_tmoy_v2b_9015_13_dif,colour="Marginal effects",group=1),lwd=1,linetype=2)+
+  geom_line(aes(y=topt_dif,colour="Δ CTI",group=1),lwd=1.25)+ geom_point(aes(y=topt_dif,fill="Δ CTI"),size=3)+
+  geom_line(aes(y=Eff_size_alti_dif,colour="Minor effects",group=1),lwd=1,linetype=2)+
+  geom_line(aes(y=Eff_size_mean_L_dif,colour="Minor effects",group=1),lwd=1,linetype=2)+
+  geom_line(aes(y=Eff_size_annee_dif,colour="Minor effects",group=1),lwd=1,linetype=2)+
+  geom_line(aes(y=Eff_size_tmoy_v2b_9015_13_dif,colour="Minor effects",group=1),lwd=1,linetype=2)+
   geom_hline(yintercept = 0,lwd=1.25,lty=2,col="grey40")+
   scale_color_manual(values=c("chocolate2", "black","cornflowerblue" ,"chartreuse4","grey80"))+
   scale_fill_manual(values=c("chocolate2", "black","cornflowerblue" ,"chartreuse4","grey80"))+
   guides(fill = FALSE)+
   geom_text(aes(y=pmin(Eff_size_mean_pH_dif,topt_dif),label=paste0("n= ",n_duets)),nudge_y=-0.035 ,nudge_x=-0.05,angle=25)+
-  labs(x="Forest amount in the 1km buffer to consider a landscape forested",y="Δ CIT",colour="Contribution of \neach effects to \nΔ CIT ")+
+  labs(x="Forest amount in the 1km buffer to consider a landscape forested",y="Δ CTI",colour="Contribution of \neach effects to \nΔ CTI ")+
   theme(axis.text.x = element_text(size=12, angle=45,colour="black", hjust = 1),
         axis.text.y = element_text(size=12,color="black"),
         axis.title.x = element_text(size=13,color="black"),
@@ -601,8 +655,9 @@ fig_3_out<-ggplot(res_dif,aes(x=buffer_width))+theme_bw()+
 
 fig_3_out
 
-reso<-2
-tiff(file.path("results_and_figures","fig_3.tif"),width =955*reso ,height =570*reso ,res =100*reso)
+reso<-4
+tiff(file.path("results_and_figures","fig_3.tif"),width =955*reso ,height =575*reso ,res =100*reso)
+jpeg(file.path("results_and_figures","fig_3.jpg"),width =955*reso ,height =575*reso ,res =100*reso)
 
 fig_3_out
 
@@ -721,234 +776,68 @@ dev.off()
 
 
 
-#### Mapping the effect across Europe, fig 4####
 
+#### correlation betwenn plants requirements, appendices ####
 
-## calculation of a pland (percentage of forest in a 1km buffer around the point) factor
-## how much pland to buffer 0.1°c of bioindicated temperature
-whole_buffer<-mean(duets$cit_climplant_dif)/mean(duets$pland_1000m_dif)
-
-##used for later raster computation
-w_raster_eur<-focalWeight(diverse_tile,1000,type="circle")
-
-## the computation described on the whole Europe, with forest cover stemming from Copernicus land monitoring service
-## is too costly to  host or reproduce
-## we load the result of the computation
-## the result is quartile describing the destribution of the percentage of forest around forests cells (see fig 4.b)
-## for each land systems tiles, those tiles are 9250meter in resolution
-dt_lus_act<-readRDS(file.path("Data","saved_calculation","Europe_forest_cover_landsystems.RData"))
-refr_lus<-fread(file.path("Data","saved_calculation","Land_systems_legend.csv"))
-colnames(refr_lus)<-c("code","LUS",colnames(refr_lus)[3:ncol(refr_lus)])
-refr_lus$order<-1:nrow(refr_lus)
-
-## the raster of forest cover is large, we provide a subset of it to reproduce the figure
-diverse_tile<-raster(file.path("Data","spatial_raster","M.cropland-Forest.tif"))
-cropland_tile<-raster(file.path("Data","spatial_raster","Cropland.tif"))
-forest_tile<-raster(file.path("Data","spatial_raster","Forest.tif"))
-
-
-## get inset is a function used to create a smaller map, of one landsystem tile, and an histogram of the pland value
-## open street map is also used for the background
-
-get_inset<-function(x,y,size,rast,style_map="thunderforestlandscape",factor_pland ,title="",save_raster=FALSE){
-  ext<-(extent(x,x,y,y)+size)
-  
-  tmp_rast<-reclassify(rast,matrix(c(0,1,2,254,255,1,NA,NA,1,1),ncol=2,nrow=5))  
-  tmp_rast<-compute_pland_raster_na(tmp_rast,w_raster_eur)
-  tmp_rast<-crop(tmp_rast,ext)
-  tmp_dt<-data.table(xyFromCell(tmp_rast,1:ncell(tmp_rast)) )
-  tmp_dt[,forest_1000m:=getValues(tmp_rast)]
-  
-  
-  
-  poly_forest<-st_union(st_as_sf(rasterToPolygons(tmp_rast)))
-  poly_forest<- smoothr::smooth(poly_forest, method = "ksmooth")
-  
-  dummy_sf<-st_as_sf(data.frame(x=0,y=0),coords=c("x","y"),crs=st_crs(tmp_rast))[-1,]
-  
-  palette_cool_looking<- list(scale_fill_carto_c(palette = "ArmyRose",direction=-1,limits = c(0,100)))
-  
-  gg_res<-ggplot(dummy_sf)+annotation_map_tile(type=style_map,zoom =   13)+geom_tile(data=tmp_dt[!is.na(forest_1000m),],aes(x=x,y=y,fill=forest_1000m),show.legend=F)+
-    theme_bw()+labs(x="",y="")+scale_x_continuous(expand=c(0,0)) +scale_y_continuous(expand=c(0,0))+theme(panel.border = element_rect(fill=NA,size=1),axis.text = element_blank(),axis.ticks = element_blank())+
-    palette_cool_looking+geom_sf(data=poly_forest,color="grey10",fill=NA,size=0.5)+labs(title=title)+theme( plot.title = element_text(hjust=0.5))+ annotation_scale(location = "bl")
-  
-  histo_res<-ggplot(tmp_dt)+geom_histogram(aes(forest_1000m,y=stat(count)/sum(count),fill=..x..),color="black",show.legend = F,breaks=seq(from=0,to=100,length.out = 20))+theme_bw()+ theme(axis.text.y = element_blank(),axis.ticks.y = element_blank())+scale_y_continuous(labels=scales::percent)+theme(aspect.ratio = 1/3,axis.title.x = element_text(size=7))+palette_cool_looking+ylab("")+xlab("Forest cover in a 1km buffer (%)")+scale_x_continuous(sec.axis = sec_axis(~ . *factor_pland, name = "CIT cooled (C°)"))
-  print(q_05(tmp_dt[,forest_1000m],na.rm=T))
-  print(q_95(tmp_dt[,forest_1000m],na.rm=T))
-  print("- - - -")
-  print(q_10(tmp_dt[,forest_1000m],na.rm=T))
-  print(q_90(tmp_dt[,forest_1000m],na.rm=T))
-
-  return(gg_res + histo_res + plot_layout(ncol=1,nrow=2,heights = c(3,1)))
-  
+## create a site x species matrix
+creat_table_sp<-function(survey){
+  table_survey<-table(survey$ident,survey$nom_espece)
+  table_survey<-as.data.frame.matrix(table_survey)
+  di<-dim(table_survey)
+  sp<-colnames(table_survey)
+  id<-rownames(table_survey)
+  table_survey<-as.matrix(table_survey)
+  table_survey<-as.numeric(table_survey)
+  table_survey<-matrix(table_survey,nrow=di[1],ncol =di[2] )
+  table_survey<-as.data.frame(table_survey)
+  rownames(table_survey)<-id
+  colnames(table_survey)<-sp
+  return(table_survey)
 }
 
-## perfome a fast computation of the percentage of forest around each forest cell
-compute_pland_raster_na<-function(rast_na,w){
-  rast_na<-raster::focal(rast_na,w,sum,na.rm=T,pad=T,padValue=1,NAonly=T)
-  rast_na<-100-(rast_na*100)
-  rast_na<-reclassify(rast_na,matrix(c(NA,100),ncol=2))
-  rast_na<-reclassify(rast_na,matrix(c(0,NA),ncol=2))
-  return(rast_na)
-  
-}
-q_05<-function(x,na.rm=T)quantile(x,na.rm=T,probs=0.05)
-q_95<-function(x,na.rm=T)quantile(x,na.rm=T,probs=0.95)
-q_10<-function(x,na.rm=T)quantile(x,na.rm=T,probs=0.1)
-q_90<-function(x,na.rm=T)quantile(x,na.rm=T,probs=0.9)
-
-## fig 4.a
-out_map_lus<-ggplot(eucoreg_poly)+theme_bw()+  annotation_map_tile(type="cartolight",zoomin = 1) + labs(x="",y="")+ 
-  geom_tile(dt_lus_act,mapping=aes(x=x,y=y,fill=fill2))+scale_fill_identity(na.value="transparent")+geom_sf(fill=NA,color="grey10")+
-  annotation_scale(location = "bl") +theme(panel.border = element_rect(fill = NA,size=1))  
-
-out_map_lus<-out_map_lus+geom_tile(dt_lus_act[extrapo=="Extrapo",],mapping=aes(x=x,y=y),fill="white",alpha=0.25)
 
 
-## suppl figure of the land systems
-suppl_map_LUS<-ggplot(eucoreg_poly)+theme_bw()+  annotation_map_tile(type="cartolight",zoomin = 1) + labs(x="",y="")+ 
-  geom_tile(dt_lus_act[!is.na(Q10),],mapping=aes(x=x,y=y,fill=LUS))+geom_sf(fill=NA,color="grey10")+
-  annotation_scale(location = "bl") +theme(panel.border = element_rect(fill = NA,size=1))+
-  theme(legend.position = "bottom",legend.title = element_blank(),legend.text = element_text(size=6),legend.key.size =unit(6,"mm"))+
-  scale_fill_manual(values=refr_lus$colorCode,breaks=refr_lus$LUS) +
-  guides(fill=guide_legend(override.aes = list(color="black",shape=21),ncol=3))
+table<-creat_table_sp(n_sp_biodind)
+table_1<-table[plots_data_duets_info[clust_studied=="Not_Forested",ident],]
+table_2<-table[plots_data_duets_info[clust_studied=="Forested",ident],]
+table[1:6,1:6]
 
+## count the number of occurence of each species
+comparaison_surv<-data.table(sp_1=apply(table_1,2,sum,na.rm=T),
+                             sp_2=apply(table_2,2,sum,na.rm=T),
+                             nom_espece=colnames(table_2))
 
+comparaison_surv[,tot_ocu:=sp_1+sp_2]
+comparaison_surv[,dif_norm:=sp_1/sp_2]
 
-## calculation of a pland (percentage of forest in a 1km buffer around the point) factor
-## how much pland to buffer 0.1°c of bioindicated temperature
-whole_buffer<-mean(duets$cit_climplant_dif)/mean(duets$pland_1000m_dif)
+## get the indicators of a species
+comparaison_surv<-merge(comparaison_surv,
+                        sp_it_climplant[,c("lb_nom_final","YearMeanMean","N_ellenberg","L_Ellenberg","vi_pH","indFor_Chytry")],
+                        by.x="nom_espece",by.y="lb_nom_final",all.x=T)
 
-## diverse inset tile
+colnames(comparaison_surv)<-c("Nom_espece","Occurence_less_forested","Occurence_forested","Occurence_total","Less_forested / forested","topt_climplant","N_ellenberg","L_Ellenberg","vi_pH","indFor_Chytry")
+comparaison_surv<-comparaison_surv[order(Occurence_total,decreasing = T),]
 
-diverse_coord<-c(3853797 ,2875000)
-inset_out_diverse<-get_inset(diverse_coord[1] ,diverse_coord[2],4620*2,diverse_tile,"cartolight",factor_pland = whole_buffer,"M.cropland-Forest") 
+## plots
+ggplot(comparaison_surv,aes(x=vi_pH,y=topt_climplant,size=Occurence_total))+theme_bw()+geom_point()+geom_smooth(aes(weight=Occurence_total),method="lm",show.legend = F)+geom_smooth(color="orange",method="lm",show.legend = F)+labs(x="pH indicator value (Ecoplant)",y="Thermal optimum (ClimPlant)",size="Occurences")
+ggplot(comparaison_surv,aes(x=N_ellenberg,y=topt_climplant,size=Occurence_total))+theme_bw()+geom_point()+geom_smooth(aes(weight=Occurence_total),method="lm",show.legend = F)+geom_smooth(color="orange",method="lm",show.legend = F)+labs(x="N Ellenberg",y="Thermal optimum (ClimPlant)",size="Occurences")
 
-## forest poor tile
+## correlation
+cor.test(comparaison_surv$topt_climplant,comparaison_surv$vi_pH,method="pearson")
+cor.test(comparaison_surv$vi_pH,comparaison_surv$N_ellenberg,method="pearson")
 
-forest_poor_coord<-c(3439403,2687465)
-inset_out_no_forest<-get_inset(  forest_poor_coord[1] , forest_poor_coord[2],4620*2,cropland_tile,"cartolight",factor_pland = whole_buffer,title="Cropland")
+## linear model (appendice)
+summary(lm(topt_climplant~vi_pH+N_ellenberg,data=comparaison_surv))
 
-
-## forest rich tile
-
-forest_rich_coord<-c(6203094,2285467)
-inset_out_rich<-get_inset(forest_rich_coord[1] ,forest_rich_coord[2]  ,4620*2,forest_tile,"cartolight",factor_pland = whole_buffer,title="Forest")
-
-
-coords_3_insets<-st_as_sf(as.data.frame(do.call(rbind,list(diverse_coord,forest_poor_coord,forest_rich_coord))),coords=c(1,2),crs=st_crs(crs(forest_tile)))
-coords_3_insets<-st_transform(coords_3_insets,crs=st_crs((eucoreg_poly)))
-coords_3_insets$label<-c("c","a","b")
-coords_3_insets$label_num<-c("3","1","2")
-coords_3_insets$x<-st_coordinates(coords_3_insets)[,1]
-coords_3_insets$y<-st_coordinates(coords_3_insets)[,2]
-
-
-## adding the coordinates of the insets to fig4.a
-out_map_lus_coords<-out_map_lus+geom_sf(data=coords_3_insets,size=1.5)+geom_text(mapping=aes(x=x,y=y+c(0,0,100000),label=label_num),data=coords_3_insets,nudge_y = 80000,fontface="bold",size=5)
-
-## adding the legend of fig 4.a
-pal_d<-fread(file.path("Data","saved_calculation","bivariate_color.csv"))
-
-legend<-ggplot(pal_d,aes(x=x_col,y=y_col,fill=fill))+geom_tile()+scale_fill_identity()+coord_equal()+theme_void()+
-  theme(panel.border = element_rect(fill=NA,color="black",size=1))+
-  labs(x="Maximal CIT \ncooling by forests",y="Minimal CIT \ncooling by forests") +
-  theme(axis.title = element_text(size = 9),legend.title = element_text(size=8), axis.title.y = element_text(angle = 90,hjust=0),axis.title.x = element_text(hjust=0)) +
-  scale_x_discrete(breaks=c(0,1),labels=c("0 C°","-0.37 C°"))+scale_y_discrete(breaks=c(0,1),labels=c("-0.37 C°","0 C°"))+
-  theme(axis.text = element_text(size=8))
-
-
-scale_leg<-1.2
-out_map_lus_cow<-cowplot::ggdraw() +
-  cowplot::draw_plot(out_map_lus_coords)+ 
-  cowplot::draw_plot(legend, 0.7, 0.52, 0.22*scale_leg, 0.22*scale_leg)
-
-
-## calculating the cooling effect for supplmentary barplots and figure 4.c
-dt_lus_act[,buf_min:=Q10*whole_buffer]
-dt_lus_act[,buf_max:=Q90*whole_buffer]
-dt_lus_act[,buf_range:=buf_max-buf_min]
-
-
-
-make_suppl_table<-function(x,round=T){
-  
-  if(round) res<-x[!is.na(Q90)|!is.na(Q10),.(Mean_forest_Q90=round(mean(Q90,na.rm=T),1),
-                                             Mean_forest_Q10=round( mean(Q10,na.rm=T),1),
-                                             Mean_buf_max= signif(mean(buf_max,na.rm=T),2),
-                                             Mean_buf_min=signif(mean(buf_min,na.rm=T),2),
-                                             mean_range_buf=signif(mean(buf_range,na.rm=T),2),
-                                             N_tile=.N),by=LUS] else {
-                                             res<-x[!is.na(Q90)|!is.na(Q10),.(Mean_forest_Q90=mean(Q90,na.rm=T),
-                                                                              Mean_forest_Q10= mean(Q10,na.rm=T),
-                                                                              Mean_buf_max= mean(buf_max,na.rm=T),
-                                                                              Mean_buf_min=mean(buf_min,na.rm=T),
-                                                                              mean_range_buf=mean(buf_range,na.rm=T),
-                                                                              N_tile=.N),by=LUS] }
-
-                                             res<-res[order(-Mean_forest_Q90),]
-}
-
-## we compute the cooling for every Land systems tiles, and the one where we don't extrapolate frome the dataset of 2012 pairs
-
-summary_all_tile<-make_suppl_table(dt_lus_act,F)
-summary_extrapo_ok_tile<-make_suppl_table(dt_lus_act[extrapo=="OK"],F)
-
-## get the label of landsytems
-summary_extrapo_ok_tile<-merge(summary_extrapo_ok_tile,refr_lus,by="LUS")
-summary_all_tile<-merge(summary_all_tile,refr_lus,by="LUS")
-
-lus_plot<-ggplot(summary_extrapo_ok_tile[LUS!=c("Bare","Bare with few livestock"),],aes(y=reorder(LUS,-order),yend=reorder(LUS,-order),x= Mean_forest_Q10,xend=Mean_forest_Q90,color=LUS))+geom_segment(show.legend = F,size=3)+scale_color_manual(values=refr_lus$colorCode,breaks=refr_lus$LUS)+theme_bw()+theme(axis.line.y=element_blank())+geom_text(mapping=aes(x=Mean_forest_Q90+6,label=N_tile),color="black")+scale_x_continuous(limits = c(0,105),sec.axis = sec_axis(~ . *whole_buffer, name = "Community Inferred Temperature cooled (C°)"))+xlab("Landscape forest cover in a 1km buffer (%)")+ylab("Land systems")
-lus_plot_extrapo<-ggplot(summary_all_tile[LUS!=c("Bare","Bare with few livestock"),],aes(y=reorder(LUS,-order),yend=reorder(LUS,-order),x= Mean_forest_Q10,xend=Mean_forest_Q90,color=LUS))+geom_segment(show.legend = F,size=3)+scale_color_manual(values=refr_lus$colorCode,breaks=refr_lus$LUS)+theme_bw()+theme(axis.line.y=element_blank())+geom_text(mapping=aes(x=Mean_forest_Q90+6,label=N_tile),color="black")+scale_x_continuous(limits = c(0,105),sec.axis = sec_axis(~ . *whole_buffer, name = "Community Inferred Temperature cooled (C°)"))+xlab("Landscape forest cover in a 1km buffer (%)")+ylab("Land systems")
-
-
-tiff(file.path("results_and_figures","fig_LUS_bars_suppl.tif"),width=850,height=400,res=100)
-
-lus_plot
-
-dev.off()
-
-tiff(file.path("results_and_figures","fig_LUS_bars_suppl_extrapo.tif"),width=850,height=400,res=100)
-
-lus_plot_extrapo
-
+## plots
+jpeg(file.path("results_and_figures","fig_pH_topt_suppl.jpg"),width=800*reso,height=400*reso,res=100*reso)
+ggplot(comparaison_surv,aes(x=vi_pH,y=topt_climplant,size=Occurence_total))+theme_bw()+geom_point()+geom_smooth(color="deepskyblue",method="lm",show.legend = F)+labs(x="pH indicator value (Ecoplant)",y="Thermal optimum (ClimPlant)",size="Occurences")
 dev.off()
 
 
-## aggregating of the information for the main categories of Land systems
-summary_agg_LUS<-summary_extrapo_ok_tile[LUS!=c("Bare","Bare with few livestock"),.(Q90=weighted.mean(Mean_forest_Q90,N_tile),Q10=weighted.mean(Mean_forest_Q10,N_tile),N_tile=sum(N_tile)),by=landUse]
-summary_agg_LUS$order<-1:8
-summary_agg_LUS$color<-c("#fa9039","#70a800","#c7e371","#b393c2","#d3e5e9","#c9d7c2","#89cd66","#a80000")
-
-## fig 4.c
-aggregated_lus_plot<-ggplot(summary_agg_LUS[landUse!=c("M.Grassland-Bare"),],aes(y=reorder(landUse,Q90),yend=reorder(landUse,Q90),x= Q90 ,xend=Q10,color=landUse))+geom_segment(show.legend = F,size=3)+geom_text(mapping=aes(x=Q90+6,label=N_tile),color="black")+
-  scale_color_manual(values=summary_agg_LUS$color,breaks=lus$landUse)+theme_bw()+theme(axis.line.y=element_blank())+xlim(c(0,-0.4))+scale_x_continuous(limits = c(0,105),sec.axis = sec_axis(~ . *whole_buffer, name = "Community Inferred Temperature cooled (C°)"))+xlab("Landscape forest cover in a 1km buffer (%)")+ylab("Land systems")
-
-
-## arrange 4.a, the 3 insets of 4.b, and 4.c
-out_fig_4_maps_lus<-ggarrange(out_map_lus_cow ,
-                              ggarrange(inset_out_no_forest,inset_out_rich,inset_out_diverse,ncol=3,labels = c("1","2","3"),hjust = -5),
-                              aggregated_lus_plot,nrow=3,heights = c(3.75,3,1.5),
-                              labels=c("(a)","(b)","(c)"),
-                              font.label = list(size=16 ,color = "black", face = "bold", family = NULL))
-
-
-
-## write the figure
-reso<-2
-tiff(file.path("results_and_figures","fig_4_maps_lus.tif"),width=850*reso,height=1200*reso,res=100*reso)
-out_fig_4_maps_lus
-dev.off()
-tiff(file.path("results_and_figures","fig_LUS_maps_suppl.tif"),width=850*reso,height=750*reso,res=100*reso)
-suppl_map_LUS
+jpeg(file.path("results_and_figures","fig_Nellenberg_topt_suppl.jpg"),width=800*reso,height=400*reso,res=100*reso)
+ggplot(comparaison_surv,aes(x=N_ellenberg,y=topt_climplant,size=Occurence_total))+theme_bw()+geom_point()+geom_smooth(aes(weight=Occurence_total),method="lm",show.legend = F)+geom_smooth(color="deepskyblue",method="lm",show.legend = F)+labs(x="N Ellenberg",y="Thermal optimum (ClimPlant)",size="Occurences")
 dev.off()
 
 
-
-## produce table 
-summary_all<-make_suppl_table(dt_lus_act)
-summary_extrapo_ok<-make_suppl_table(dt_lus_act[extrapo=="OK"])
-
-write.table(summary_extrapo_ok,"table_suppl_3.csv",row.names=F,sep=";",dec = ",")
-write.table(summary_all,"table_suppl_4.csv",row.names=F,sep = ";",dec=",")
-
+## end
