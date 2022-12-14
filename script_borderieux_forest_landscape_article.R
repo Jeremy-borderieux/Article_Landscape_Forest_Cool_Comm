@@ -647,7 +647,7 @@ fig_3_out<-ggplot(res_dif,aes(x=buffer_width))+theme_bw()+
   scale_fill_manual(values=c("chocolate2", "black","cornflowerblue" ,"chartreuse4","grey80"))+
   guides(fill = FALSE)+
   geom_text(aes(y=pmin(Eff_size_mean_pH_dif,topt_dif),label=paste0("n= ",n_duets)),nudge_y=-0.035 ,nudge_x=-0.05,angle=25)+
-  labs(x="Forest amount in the 1km buffer to consider a landscape forested",y="Δ CTI",colour="Contribution of \neach effects to \nΔ CTI ")+
+  labs(x="Forest amount within a 1km radius to consider a landscape forested",y="Δ CTI",colour="Contribution of \neach effect to \nΔ CTI ")+
   theme(axis.text.x = element_text(size=12, angle=45,colour="black", hjust = 1),
         axis.text.y = element_text(size=12,color="black"),
         axis.title.x = element_text(size=13,color="black"),
@@ -656,8 +656,8 @@ fig_3_out<-ggplot(res_dif,aes(x=buffer_width))+theme_bw()+
 fig_3_out
 
 reso<-4
-tiff(file.path("results_and_figures","fig_3.tif"),width =955*reso ,height =575*reso ,res =100*reso)
-jpeg(file.path("results_and_figures","fig_3.jpg"),width =955*reso ,height =575*reso ,res =100*reso)
+tiff(file.path("results_and_figures","fig_3.tif"),width =955*reso ,height =535*reso ,res =100*reso)
+jpeg(file.path("results_and_figures","fig_3.jpg"),width =955*reso ,height =545*reso ,res =100*reso)
 
 fig_3_out
 
@@ -763,10 +763,10 @@ out_final_map3_zoom<-Visualize_duets_landscape(dt_fig1_b,sample_raster_fig_1,buf
 
 out_final_map3_zoom<-out_final_map3_zoom+theme(legend.text = element_text(size=14),legend.title = element_text(size=16,face="bold"))
 
-square_inset<-st_buffer(get_centroid_duets(st_as_sf(dt_fig1_b,coords = c("xl93","yl93"),crs=st_crs(2154))),endCapStyle = "SQUARE",dist=10000)
+square_inset<-st_buffer(get_centroid_duets(st_as_sf(dt_fig1_b,coords = c("xl93","yl93"),crs=st_crs(2154))),endCapStyle = "SQUARE",dist=11000)
 
 ## arrange fig1.a and fig.b
-out_map_inset_zommed<-ggarrange(out_map_2_zoomed+geom_sf(data=square_inset,fill=NA,lwd=1,col="brown"),out_final_map3_zoom,nrow=2,align = "v",heights = c(1.5,1),hjust = 0,labels = c("(a)    ","(b)    "),font.label = list(size = 26, color = "black", face = "bold", family = NULL))
+out_map_inset_zommed<-ggarrange(out_map_2_zoomed+geom_sf(data=square_inset,fill=NA,lwd=1.2,col="brown"),out_final_map3_zoom,nrow=2,align = "v",heights = c(1.5,1),hjust = 0,labels = c("(a)    ","(b)    "),font.label = list(size = 26, color = "black", face = "bold", family = NULL))
 
 
 tiff(file.path("results_and_figures","map_fig_1_ggarange_smaller.tif"),width =650*reso /2,height =1150*reso /2,res =100*reso/2)
