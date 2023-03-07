@@ -201,7 +201,7 @@ get_duet_optimal<-function(sf_ifn,dist_table,distance_tresh=5,differences_to_com
     nb_neig_idp2_dt<-as.data.table(table(dist_table$idp2))
     colnames(nb_neig_idp2_dt)<-c("idp2","nb_neig2")
     
-    # we match the number of neigboh with dist_table, that containt all the potential pairs
+    # we match the number of neighbor with dist_table, that containt all the potential pairs
     dist_table[,nb_neig1:=nb_neig_idp1_dt[match(dist_table$idp1,idp1),2]]
     dist_table[,nb_neig2:=nb_neig_idp2_dt[match(dist_table$idp2,idp2),2]]
     
@@ -255,7 +255,7 @@ duet_distances<-get_distances(plots_data_sf, # spatial object of interest (point
                               plots_data_sf$forest_type, # the factor used to cluster the ponit in two classes
                               "Forested","Not_Forested", # the two classes
                               5.5,# distance threshold km
-                              use_rtree = T) # use the package Rtree to faste nthe computation
+                              use_rtree = T) # use the package Rtree to fasten the computation
 
 # from all the potential pairs, get_duet_optimal return the maximum number of pairs, the constrain being that a plot can only be used once
 duets<-get_duet_optimal(plots_data_sf,# same spatial object
@@ -298,15 +298,8 @@ plots_data_duets_info$couvert_info_duets<-plots_data_duets_info[,rep(sum(!is.na(
 plots_data_duets_info$edge_info_duets<-plots_data_duets_info[,rep(sum(!is.na(distance_edge)),2),by=duet_id]$V1
 
 
-## figure 2: histogram of the differences within a pair
+#### fig2: histogram of the differences within a pair ####
 duets[,Forested_landscape:=ifelse(cti_climplant_dif<0,"Cooler CTI","Warmer CTI")]
-
-fig_2_out<-ggplot(duets,aes(x= cti_climplant_dif,fill= Forested_landscape))+theme_bw()+
-  geom_histogram(color="black",binwidth = 0.25,origin=0)+
-  geom_vline(xintercept = mean(duets$cti_climplant_dif),col="black",lwd=1,linetype=2)+geom_segment(aes(x=0,xend=0,y=0,yend=254),col="grey20",lwd=1)+
-  scale_fill_manual(values=c("lightblue3","lightcoral"))+
-  ylab("Number of plot pairs")+xlab("∆CTI: Forested CTI  -  Non forested CTI ")+labs(fill = "Forested \nlandscape")+scale_y_continuous(limits=c(0,300))+scale_x_continuous(labels = paste0(c(-4,-2,0,2,4) , "°C"))+
-  annotate("text", x = -1.25, y = 295, label = paste0("Mean ∆CTI",round(mean(duets$cti_climplant_dif),2),"°C"))
 
 max_col<-1.5
 fig_2_out<-ggplot(duets,aes(x= cti_climplant_dif))+theme_bw()+
@@ -314,21 +307,25 @@ fig_2_out<-ggplot(duets,aes(x= cti_climplant_dif))+theme_bw()+
   geom_vline(xintercept = mean(duets$cti_climplant_dif),col="black",lwd=1,linetype=1)+geom_vline(xintercept = 0,col="grey20",lwd=1,lty=2)+
   scale_color_manual(values=c("grey10","red"))+
   scale_fill_gradient2(low = "lightskyblue3",mid="grey99",high="lightcoral",midpoint=0,limits=c(-max_col,max_col),na.value="blue")+
-  ylab("Number of plot pairs")+xlab("∆CTI: Forested CTI  -  Non forested CTI ")+scale_y_continuous(limits=c(0,300))+scale_x_continuous(limits=c(-4,4),labels = paste0(c(-4,-2,0,2,4) , "°C"))+
-  annotate("text", x = -1.25, y = 295, label = paste0("Mean ∆CTI",round(mean(duets$cti_climplant_dif),2),"°C"))+
+  ylab("Number of plot pairs")+xlab("\U0394\u0043TI: Forested CTI  -  Non forested CTI ")+scale_y_continuous(limits=c(0,300))+scale_x_continuous(limits=c(-4,4),labels = paste0(c(-4,-2,0,2,4) , "°C"))+
+  annotate("text", x = -1.25, y = 295, label = paste0("Mean \U0394\u0043TI",round(mean(duets$cti_climplant_dif),2),"°C"))+
   annotate("text", x = -4, y = 95, label = "CTI lower in \nforested landscape",hjust = 0)+
   annotate("text", x = 2, y = 95, label = "CTI higher in \nforested landscape",hjust = 0)+
   annotate("segment", x = 0, y = 287,xend=mean(duets$cti_climplant_dif),yend=287,lty=2, lwd=0.5,arrow=arrow(angle=25,length=unit(0.12,"inches")))+
   annotate("segment", x = mean(duets$cti_climplant_dif)+0.01, y = 287,xend=mean(duets$cti_climplant_dif),yend=287,lty=1,lwd=0.5, arrow=arrow(angle=25,length=unit(0.12,"inches")))
 
 
-
+showtext:: showtext_auto(enable = F)
 reso<-2
 tiff(file.path("results_and_figures","fig_2_hist.tif"),width=725*reso,height=450*reso,res=100*reso)
 
 fig_2_out
 
 dev.off()
+
+showtext:: showtext_auto(enable = T)
+ggsave(file.path("results_and_figures","fig_2_hist.pdf"),plot =fig_2_out,width =725 ,height =450 ,units = "px",scale=3)
+showtext:: showtext_auto(enable = F)
 
 ## small numbers for result core text main text
 mean(duets$cti_climplant_dif)
@@ -342,33 +339,15 @@ wilcox.test(duets$cti_climplant_dif)
 summary(duets$cti_climplant_dif)
 
 
-## linear model for analysis
+#### linear model for analysis ####
 #number of pairs for the main and the submodels
+
+
 n_full_model<-nrow(duets)
 n_cover_model<-nrow(duets[!is.na(couverttot_dif),])
 n_edge_model<-nrow(duets[!is.na(distance_edge_dif),])
 
 scope<-c("cti_climplant_dif","tmoy_v2b_9015_13_dif","mean_L_dif","mean_pH_dif","mean_N_dif","annee_dif","alti_dif")
-
-lm_duets_pair<-lm(cti_climplant_dif~1,data=duets[,..scope],y=T,x=T)
-lm_duets_pair_2<-lm(cti_climplant_dif~.,data=duets[,..scope],y=T,x=T)
-
-step_pair<-step(lm_duets_pair,direction="both",scope=list(upper=lm_duets_pair_2,lower=lm_duets_pair))
-summary(step_pair)
-## all the variable are included, we run the submodels with all the variable, and the addition of canopy cover or distance to the edge
-lm_duets_pair<-lm(cti_climplant_dif~alti_dif+tmoy_v2b_9015_13_dif+mean_L_dif+mean_pH_dif+mean_N_dif+annee_dif,data=duets_env,y=T,x=T)
-lm_cover<-lm(cti_climplant_dif~alti_dif+tmoy_v2b_9015_13_dif+mean_L_dif+mean_pH_dif+mean_N_dif+annee_dif+couverttot_dif,data=duets_env,y=T,x=T)
-lm_edge<-lm(cti_climplant_dif~alti_dif+tmoy_v2b_9015_13_dif+mean_L_dif+mean_pH_dif+mean_N_dif+annee_dif+distance_edge_dif,data=duets_env,y=T,x=T)
-summary(lm_duets_pair);summary(lm_cover);summary(lm_edge)
-
-summ<-summary(lm_duets_pair)
-summ
-coef(summ)
-
-### try new data analysis, reviews from GEB
-## the editor concern was : regression toward the mean and also wanted to try absolute CTI or 
-## MAT as a covariable of the model
-
 
 duets_env<-merge(duets,plots_data,by.x="idp1",by.y="idp")
 duets_env[,dif_from_mean_cti_climplant:=scale(cti_climplant)]
@@ -376,6 +355,24 @@ duets_env[,dif_from_mean_cti_climplant:=scale(cti_climplant)]
 duets_env<-merge(duets_env,plots_data_duets_info[,.(ref_duet_climplant=mean(cti_climplant),ref_duet_tmoy=mean(tmoy_v2b_9015_13)),by=duet_id],by="duet_id")
 duets_env[,dif_from_ref_mean_cti_climplant:=scale(ref_duet_climplant)]
 duets_env[,dif_from_ref_mean_tmoy:=ref_duet_tmoy-mean(ref_duet_tmoy)]
+
+lm_duets_pair<-lm(cti_climplant_dif~1,data=duets[,..scope],y=T,x=T)
+lm_duets_pair_2<-lm(cti_climplant_dif~.,data=duets[,..scope],y=T,x=T)
+
+step_pair<-step(lm_duets_pair,direction="both",scope=list(upper=lm_duets_pair_2,lower=lm_duets_pair))
+summary(step_pair)
+
+## all the variable are included, we run the submodels with all the variable, and the addition of canopy cover or distance to the edge
+lm_duets_pair<-lm(cti_climplant_dif~alti_dif+tmoy_v2b_9015_13_dif+mean_L_dif+mean_pH_dif+mean_N_dif+annee_dif,data=duets_env,y=T,x=T)
+lm_cover<-lm(cti_climplant_dif~alti_dif+tmoy_v2b_9015_13_dif+mean_L_dif+mean_pH_dif+mean_N_dif+annee_dif+couverttot_dif,data=duets_env,y=T,x=T)
+lm_edge<-lm(cti_climplant_dif~alti_dif+tmoy_v2b_9015_13_dif+mean_L_dif+mean_pH_dif+mean_N_dif+annee_dif+distance_edge_dif,data=duets_env,y=T,x=T)
+
+summary(lm_duets_pair);summary(lm_cover);summary(lm_edge)
+
+
+### try new data analysis, reviews from GEB
+## the editor concern was : regression toward the mean and also wanted to try absolute CTI or 
+## MAT as a covariable of the model
 
 lm_duets_pair<-lm(cti_climplant_dif~alti_dif+dif_from_mean_cti_climplant+dif_from_ref_mean_tmoy+tmoy_v2b_9015_13_dif+mean_L_dif+mean_pH_dif+mean_N_dif+annee_dif,data=duets_env,y=T,x=T)
 lm_cover<-lm(cti_climplant_dif~alti_dif+dif_from_mean_cti_climplant+dif_from_ref_mean_tmoy+tmoy_v2b_9015_13_dif+mean_L_dif+mean_pH_dif+mean_N_dif+annee_dif+couverttot_dif,data=duets_env,y=T,x=T)
@@ -558,7 +555,7 @@ for(i in buffers ){
 ### the two foreach loop reproduce the calcultation of the distances and the duets pairing for a lot of different
 # percentages of forested landscape, the results are saved in the same .RData we saw earlier if you don't want to run these lines
 
-cluster_duets_vary<-makeCluster(4)
+cluster_duets_vary<-makeCluster(3)
 registerDoParallel(cluster_duets_vary)
 
 list_distances<-foreach(buff=buffers,.combine = list,.multicombine = T,.packages = c("data.table","stringr","foreach","broman","sf","rtree"))%dopar%{
@@ -577,7 +574,7 @@ names(list_distances)<-buffers
 list_duets<-foreach(dist=list_distances,.combine = list,.multicombine = T,.packages = c("data.table","stringr","foreach","broman"))%dopar%{
   
   
-  res<-get_duet_optimal(plots_data_sf,dist,distance_tresh=5,differences_to_compute=c("alti","cti_climplant","tmoy_v2b_9015_13","mean_L","mean_pH","mean_pH","mean_N","annee","pland_1000m","couverttot","basal_area","Ntot","cti_ecoplant","cti_ecoplant_picq"),differences_tresh =   c(50,rep(0,13)))
+  res<-get_duet_optimal(plots_data_sf,dist,distance_tresh=5,differences_to_compute=c("alti","cti_climplant","tmoy_v2b_9015_13","mean_L","mean_pH","mean_pH","mean_N","annee","pland_1000m","couverttot","basal_area","Ntot","cti_ecoplant","cti_ecoplant_picq","distance_edge"),differences_tresh =   c(50,rep(0,14)))
   res
   
 }
@@ -631,23 +628,23 @@ summary(res_dif)
 
 ### figure 3 : with different scale
 
-
+# delta CTI is translated to \U0394\u0043TI  in Unicode character for the printing functions to work
 
 fig_3_out<-ggplot(res_dif,aes(x=buffer_width))+theme_bw()+
-  geom_line(aes(y=Eff_size_mean_N_dif,color="Δ Ellenberg N",group=1),lwd=1.25)+geom_point(aes(y=Eff_size_mean_N_dif,fill="Δ Ellenberg N"),color="black",size=3,shape=24)+
-  geom_line(aes(y=Eff_size_mean_pH_dif,color="Δ Bioindicated pH",group=1),lwd=1.25)+geom_point(aes(y=Eff_size_mean_pH_dif,fill="Δ Bioindicated pH"),color="black",size=3,shape=25)+
+  geom_line(aes(y=Eff_size_mean_N_dif,color="\U0394 Ellenberg N",group=1),lwd=1.25)+geom_point(aes(y=Eff_size_mean_N_dif,fill="\U0394 Ellenberg N"),color="black",size=3,shape=24)+
+  geom_line(aes(y=Eff_size_mean_pH_dif,color="\U0394 Bioindicated pH",group=1),lwd=1.25)+geom_point(aes(y=Eff_size_mean_pH_dif,fill="\U0394 Bioindicated pH"),color="black",size=3,shape=25)+
   geom_line(aes(y=`Eff_size_(Intercept)`,color="Forested landscape",group=1),lwd=1.25)+ geom_point(aes(y=`Eff_size_(Intercept)`,fill="Forested landscape"),color="black",size=3,shape=25)+
-  geom_line(aes(y=topt_dif,colour="Δ CTI",group=1),lwd=1.25)+ geom_point(aes(y=topt_dif,fill="Δ CTI"),size=3)+
+  geom_line(aes(y=topt_dif,colour="\U0394\u0043TI",group=1),lwd=1.25)+ geom_point(aes(y=topt_dif,fill="\U0394\u0043TI"),size=3)+
   geom_line(aes(y=Eff_size_alti_dif,colour="Minor effects",group=1),lwd=1,linetype=2)+
   geom_line(aes(y=Eff_size_mean_L_dif,colour="Minor effects",group=1),lwd=1,linetype=2)+
   geom_line(aes(y=Eff_size_annee_dif,colour="Minor effects",group=1),lwd=1,linetype=2)+
   geom_line(aes(y=Eff_size_tmoy_v2b_9015_13_dif,colour="Minor effects",group=1),lwd=1,linetype=2)+
   geom_hline(yintercept = 0,lwd=1.25,lty=2,col="grey40")+
-  scale_color_manual(values=c("chocolate2", "black","cornflowerblue" ,"chartreuse4","grey80"))+
-  scale_fill_manual(values=c("chocolate2", "black","cornflowerblue" ,"chartreuse4","grey80"))+
+  scale_color_manual(values=c("chocolate2", "cornflowerblue","black" ,"chartreuse4","grey80"))+
+  scale_fill_manual(values=c("chocolate2","cornflowerblue", "black" ,"chartreuse4","grey80"))+
   guides(fill = FALSE)+
   geom_text(aes(y=pmin(Eff_size_mean_pH_dif,topt_dif),label=paste0("n= ",n_duets)),nudge_y=-0.035 ,nudge_x=-0.05,angle=25)+
-  labs(x="Forest amount within a 1km radius to consider a landscape forested",y="Δ CTI",colour="Contribution of \neach effect to \nΔ CTI ")+
+  labs(x="Forest amount within a 1km radius to consider a landscape forested",y="\U0394\u0043TI",colour="Contribution of \neach effect to \n\U0394\u0043TI ")+
   theme(axis.text.x = element_text(size=12, angle=45,colour="black", hjust = 1),
         axis.text.y = element_text(size=12,color="black"),
         axis.title.x = element_text(size=13,color="black"),
@@ -655,20 +652,26 @@ fig_3_out<-ggplot(res_dif,aes(x=buffer_width))+theme_bw()+
 
 fig_3_out
 
+showtext:: showtext_auto(enable = F)
 reso<-4
 tiff(file.path("results_and_figures","fig_3.tif"),width =955*reso ,height =535*reso ,res =100*reso)
 jpeg(file.path("results_and_figures","fig_3.jpg"),width =955*reso ,height =545*reso ,res =100*reso)
-
 fig_3_out
 
 dev.off()
+showtext:: showtext_auto(enable = T)
+
+showtext:: showtext_auto(enable = T)
+ggsave(file.path("results_and_figures","fig_3.pdf"),plot =fig_3_out,width =955 ,height =545 ,units = "px",scale=2.9)
+showtext:: showtext_auto(enable = F)
 
 
 #### maps for representation, fig 1#### 
 
 
- plots_data_duets_info_sf<-st_as_sf(plots_data_duets_info,coords=c("xl93","yl93"),crs=st_crs(2154))#
+plots_data_duets_info_sf<-st_as_sf(plots_data_duets_info,coords=c("xl93","yl93"),crs=st_crs(2154))#
 ## getting the centroids of each pairs
+
 get_centroid_duets<-function(sf_2rows){ res<-st_as_sf( st_centroid(st_cast(st_combine(sf_2rows),"LINESTRING")),crs=st_crs(2154))
  res$duet_id<-sf_2rows$duet_id[1]
  res}
@@ -676,33 +679,30 @@ get_centroid_duets<-function(sf_2rows){ res<-st_as_sf( st_centroid(st_cast(st_co
  all_centroid<-foreach(duet=sort(unique(plots_data_duets_info_sf$duet_id)),.combine=rbind)%do%{get_centroid_duets(plots_data_duets_info_sf[plots_data_duets_info_sf$duet_id==duet,])}
 
 
-## loading France forest cover at 1km scale for representation
+## loading France forest cover at 1km scale for fig 1.A
 rasterize_forest_2<-raster(file.path("Data","spatial_raster","forest_cover_france.tif"))
 ## Using the french ecological region as a border for basemap
 GRECO_temperate_forest<-GRECO_poly[!GRECO_poly$GRECO%in%c("-","H","K","J"),]
 rasterize_forest_2<-mask(rasterize_forest_2,as_Spatial( st_union(GRECO_temperate_forest)))
-
-
-## maps, using ggspatial and opens street map basemaps
 raster_dt<-data.table(xyFromCell(rasterize_forest_2,1:ncell(rasterize_forest_2)) )
 raster_dt$forested<-getValues(rasterize_forest_2)
 
 
-out_map_1<-ggplot(all_centroid)+theme_bw()+  annotation_map_tile(type="thunderforestlandscape",zoomin = 0) + 
-  geom_raster(raster_dt,mapping=aes(x=x,y=y,fill=forested))+scale_fill_gradient(low="cornsilk",high ="chartreuse4" ,na.value = "transparent")+
-  geom_sf(size=0.9)+geom_sf(data=st_union(GRECO_temperate_forest),color="black",fill=NA)+ labs(x="",y="")+guides(fill = FALSE)+
-  annotation_north_arrow(location = "tl")+annotation_scale(location = "bl", text_cex = 1.3)
 
-out_map_2<-ggplot(all_centroid)+theme_bw()+  annotation_map_tile(type="cartolight",zoomin = 0) + 
-  geom_raster(raster_dt,mapping=aes(x=x,y=y,fill=forested))+scale_fill_gradient(low="cornsilk",high ="chartreuse4" ,na.value = "transparent")+
-  geom_sf(size=0.9)+geom_sf(data=st_union(GRECO_temperate_forest),color="black",fill=NA)+ labs(x="",y="")+guides(fill = FALSE)+
- annotation_north_arrow(location = "tl")+annotation_scale(location = "bl", text_cex = 1.3)
+## maps, using ggspatial and opens street map basemaps
+out_map_1<-ggplot(all_centroid)+theme_bw()+  annotation_map_tile(type="cartolight",zoomin = 0) + 
+  geom_raster(raster_dt,mapping=aes(x=x,y=y,fill=forested))+
+  scale_fill_gradient(low="cornsilk",high ="chartreuse4" ,na.value = "transparent")+
+  geom_sf(size=0.9)+geom_sf(data=st_union(GRECO_temperate_forest),color="black",fill=NA)+ 
+  labs(x="",y="")+guides(fill = FALSE)+
+  annotation_north_arrow(location = "tl")+annotation_scale(location = "bl", text_cex = 1.3)
 
 
 ## changing the scale, allowing the figure 1 to be smaller
-out_map_1_zoomed<-out_map_1+theme(axis.text = element_text(size=13))
-out_map_2_zoomed<-out_map_2+theme(axis.text = element_text(size=13))
+## a small inset
+square_inset<-st_buffer(get_centroid_duets(st_as_sf(dt_fig1_b,coords = c("xl93","yl93"),crs=st_crs(2154))),endCapStyle = "SQUARE",dist=11000)
 
+out_map_1_zoomed<-out_map_1+theme(axis.text = element_text(size=13))+geom_sf(data=square_inset,fill=NA,linewidth=1.2,col="brown")
 
 ## this function is used to create the fig1.b zoomed landscape, to illustrate a pair
 
@@ -741,10 +741,17 @@ Visualize_duets_landscape<-function(dt_2_points,raster_forest,buffers=c(250,1000
     p<-p+annotation_scale(location = "bl")+ coord_sf(xlim=c(ext[1],ext[2]),ylim=c(ext[3],ext[4]),datum = st_crs(4326))+labs(x="",y="")+theme(legend.position =legend.position,legend.direction = ifelse(legend.position%in%c("bottom","top"),"horizontal","vertical") )
   p
   }else{
-    p2<-ggplot(points_2_sf)+annotation_map_tile(type=style_map,zoom =   13)+geom_raster(data=xy,aes(x=x,y=y,fill=as.factor(val)),show.legend=F)+scale_fill_manual(values=forest_color,na.value = "transparent")+theme_bw()+
-      geom_sf(mapping=aes(color=`Plot classification`),size=2.3)+scale_color_manual(values=c("tan4","darkgoldenrod1"))+
-      geom_sf(data=sf_buffer,aes(color=`Plot classification`),size=1.2,show.legend=F,fill=NA,alpha=0.2)+guides(color = guide_legend(override.aes = list(size = 4)))+
-      annotation_scale(location = "bl",text_cex =1.3)+ coord_sf(xlim=c(ext[1],ext[2]),ylim=c(ext[3],ext[4]),datum = st_crs(4326))+labs(x="",y="")+theme(legend.position =legend.position,legend.direction = ifelse(legend.position%in%c("bottom","top"),"horizontal","vertical"),axis.text = element_blank(),axis.ticks = element_blank() )
+    p2<-ggplot(points_2_sf)+annotation_map_tile(type=style_map,zoom =   13)+
+      geom_raster(data=xy,aes(x=x,y=y,fill=as.factor(val)),show.legend=F)+
+      scale_fill_manual(values=forest_color,na.value = "transparent")+
+      theme_bw()+
+      geom_sf(mapping=aes(color=`Plot classification`),size=2.3)+
+      scale_color_manual(values=c("tan4","darkgoldenrod1"))+
+      geom_sf(data=sf_buffer,aes(color=`Plot classification`),show.legend=F,fill=NA,linewidth=1.5,alpha=0.2)+
+      guides(color = guide_legend(override.aes = list(size = 4)))+
+      annotation_scale(location = "bl",text_cex =1.3)+ 
+      coord_sf(xlim=c(ext[1],ext[2]),ylim=c(ext[3],ext[4]),datum = st_crs(4326))+
+      labs(x="",y="")+theme(legend.position =legend.position,legend.direction = ifelse(legend.position%in%c("bottom","top"),"horizontal","vertical"),axis.text = element_blank(),axis.ticks = element_blank() )
     p2}
   
 }
@@ -756,25 +763,26 @@ sample_raster_fig_1<-raster(file.path("Data","spatial_raster","fig_1_landscape.t
 # we use a selected pair for display, as real coordinates of NFI are private
 dt_fig1_b<-data.table(xl93=c(517606,513803),yl93=c(6787715,6789970),clust_studied=c("Not_Forested","Forested"),duet_id=1)
 
-out_final_map3_zoom<-Visualize_duets_landscape(dt_fig1_b,sample_raster_fig_1,buffers=c(1000),
+out_final_map2_zoom<-Visualize_duets_landscape(dt_fig1_b,sample_raster_fig_1,buffers=c(1000),
                           use_osm = T,style_map = "osm",
                           extent_x_change = -0.05,extent_y_change = -0.15,
                           legend.position = "bottom")
 
-out_final_map3_zoom<-out_final_map3_zoom+theme(legend.text = element_text(size=14),legend.title = element_text(size=16,face="bold"))
-
-square_inset<-st_buffer(get_centroid_duets(st_as_sf(dt_fig1_b,coords = c("xl93","yl93"),crs=st_crs(2154))),endCapStyle = "SQUARE",dist=11000)
+out_final_map2_zoom<-out_final_map2_zoom+theme(legend.text = element_text(size=14),legend.title = element_text(size=16,face="bold"))
 
 ## arrange fig1.a and fig.b
-out_map_inset_zommed<-ggarrange(out_map_2_zoomed+geom_sf(data=square_inset,fill=NA,lwd=1.2,col="brown"),out_final_map3_zoom,nrow=2,align = "v",heights = c(1.5,1),hjust = 0,labels = c("(a)    ","(b)    "),font.label = list(size = 26, color = "black", face = "bold", family = NULL))
+out_map_inset_zommed<-ggarrange(out_map_1_zoomed,
+                                out_final_map2_zoom,
+                                nrow=2,align = "v",heights = c(1.5,1),hjust = 0,labels = c("(a)    ","(b)    "),font.label = list(size = 26, color = "black", face = "bold", family = NULL))
 
 
-tiff(file.path("results_and_figures","map_fig_1_ggarange_smaller.tif"),width =650*reso /2,height =1150*reso /2,res =100*reso/2)
+tiff(file.path("results_and_figures","map_fig_1_ggarange_smaller.tif"),width =650*2,height =1150*2,res =100*2)
+
 out_map_inset_zommed
 
 dev.off()
 
-
+ggsave(file.path("results_and_figures","map_fig_1_ggarange_smaller.pdf"),plot=out_map_inset_zommed,width =650,height =1150,units="px",scale=3.1)
 
 
 #### correlation betwenn plants requirements, appendices ####

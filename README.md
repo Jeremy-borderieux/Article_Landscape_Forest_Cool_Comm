@@ -1,22 +1,23 @@
 # Article_Landscape_Forest_cool_com
 
-## A high proportion of landscape forest cover cools understory plant communities in agriculture-forest mosaics.
+## High landscape-scale forest cover favors cold-adapted plant communities in agriculture-forest mosaics
 
-This repo contains the raw dataset and the code used in the study "A high proportion of landscape forest cover cools understory plant communities in agriculture-forest mosaics."
+This repo contains the raw dataset and the code used in the study "High landscape-scale forest cover favors cold-adapted plant communities in agriculture-forest mosaics" published in *GEB*
 
 **DOI:** no attribution yet
 
 You can clone this R project to reproduce the Analysis, the results and the figures, we advise you to use R studio and its Git connection.
 
+tutorial to getting stated with R studio and git :https://jennybc.github.io/2014-05-12-ubc/ubc-r/session03_git.html
+
 The dataset contains all of the French Forest Inventory (new version: 2005-2019), which is freely distributed  by the institute for geographic and forest information (IGN) at https://inventaire-forestier.ign.fr/
 
-The raw rasters of France and Europe forest cover were not included because of their file size
 We included subsets of the rasters in order to reproduce the figures
 The analysis was run using R `4.1.1`, and we checked for reproducibility with R `3.6.2`
 
 ### Abstract:
 
-**Aim:** The ongoing climate warming is expected to reshuffle plant community composition by increasing the occurrence of warm-adapted species at the expense of cold-adapted species. This process is evidenced by warmer community inferred temperatures (CIT). To date, observations show that local tree canopy partly explains the lag between understory plant CIT and climate warming rates, but landscape-scale forest cover effects have not been investigated.  Here, we test the hypothesis that the amount of forest cover in the landscape affects local CIT.
+**Aim:** The ongoing climate warming is expected to reshuffle understory plant-community composition by increasing the occurrence of warm-adapted species at the expense of cold-adapted species. Previous studies have evidenced a warming Community Temperature Index (CTI) over time. However, data indicate that the local tree canopy can partly explain an observed lag between understory plant CTI and climate warming rates, though landscape-scale forest cover effects have not yet been investigated. Here, we test the hypothesis that the amount of forest cover in the landscape lowers local CTI.
 
 **Location:** France, European temperate mixed forest
 
@@ -24,9 +25,9 @@ The analysis was run using R `4.1.1`, and we checked for reproducibility with R 
 
 **Major taxa studied:** Forest vascular plants.
 
-**Methods:** We performed pairwise comparisons of 4,024 nearby French forest inventory plots with contrasting percentages of forest cover in a 1 km buffer, to control for macroenvironmental factors. We computed the difference in CIT of understory communities between these pairs and tested the contribution of landscape forest cover, canopy cover, and soil conditions. We further projected this difference on lowland European forest map.
+**Methods:** We compared 2,012 pairs of neighboring French forest inventory plots with contrasting percentages of forest cover within a 1-km radius area (landscape forest cover). We computed the difference in the CTI of the understory communities for each pair and tested the contribution of the landscape-scale forest cover, local canopy cover, and soil conditions to the differences in CTI. 
 
-**Results:** In plot pairs, plots surrounded by higher forest cover had, on average, a 0.26 °C cooler CIT. This offset represents the cooling capacity of a highly forested landscape. Half of this cooling capacity was explained by correlation with other plant traits such as pH preferences, and the other half by the difference in the surrounding forest cover. 
+**Results:** Plots located in highly forested areas (>80% in the 1km area) had an average CTI 0.26 °C lower (0.81°C s.d.) than plots in sparsely forested areas (<30% in a 1km area). Fifty percent of this difference was explained by landscape-scale forest cover. Bioindicated soil conditions such as pH and available nutrients, which correlated with cold-adapted species preferences, explained the remaining 50%.
 
-**Main conclusions:** Big forest masses allow conserving cold-adapted species, by adding to the local canopy buffering a cooling effect stemming from nearby forest cover. Diverse landscapes with both small and big forests can host both cold and warm adapted species in a given macroclimatic condition.
+**Main conclusions:** Highly forested landscapes allow colder-adapted species to survive in given macroclimatic conditions. These landscapes meet cold-adapted species soil requirements and may cool the regional climate. Further microclimatic studies are needed to confirm the cooling capacity of landscape-scale forest cover.
 
