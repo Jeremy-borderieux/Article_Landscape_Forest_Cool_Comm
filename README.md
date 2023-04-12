@@ -4,7 +4,7 @@
 
 This repo contains the raw dataset and the code used in the study "High landscape-scale forest cover favors cold-adapted plant communities in agriculture-forest mosaics" published in *GEB*
 
-**DOI:** no attribution yet
+**DOI:** https://doi.org/10.1111/geb.13676
 
 You can clone this R project to reproduce the Analysis, the results and the figures, we advise you to use R studio and its Git connection.
 
