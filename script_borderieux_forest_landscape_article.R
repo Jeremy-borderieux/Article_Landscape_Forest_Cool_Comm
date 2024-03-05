@@ -303,7 +303,7 @@ duets[,Forested_landscape:=ifelse(cti_climplant_dif<0,"Cooler CTI","Warmer CTI")
 
 max_col<-1.5
 fig_2_out<-ggplot(duets,aes(x= cti_climplant_dif))+theme_bw()+
-  geom_histogram(mapping=aes(color=ifelse(..x..>3,NA,"no_na"),fill=ifelse(..x..>max_col,max_col,ifelse(..x..< -max_col,-max_col,..x..))),binwidth = 0.25,origin=0,show.legend = F)+
+  geom_histogram(mapping=aes(color=ifelse(after_stat(x)>3,NA,"no_na"),fill=ifelse(after_stat(x)>max_col,max_col,ifelse(after_stat(x)< -max_col,-max_col,after_stat(x)))),binwidth = 0.25,boundary=0,show.legend = F)+
   geom_vline(xintercept = mean(duets$cti_climplant_dif),col="black",lwd=1,linetype=1)+geom_vline(xintercept = 0,col="grey20",lwd=1,lty=2)+
   scale_color_manual(values=c("grey10","red"))+
   scale_fill_gradient2(low = "lightskyblue3",mid="grey99",high="lightcoral",midpoint=0,limits=c(-max_col,max_col),na.value="blue")+
@@ -847,5 +847,46 @@ jpeg(file.path("results_and_figures","fig_Nellenberg_topt_suppl.jpg"),width=800*
 ggplot(comparaison_surv,aes(x=N_ellenberg,y=topt_climplant,size=Occurence_total))+theme_bw()+geom_point()+geom_smooth(aes(weight=Occurence_total),method="lm",show.legend = F)+geom_smooth(color="deepskyblue",method="lm",show.legend = F)+labs(x="N Ellenberg",y="Thermal optimum (ClimPlant)",size="Occurences")
 dev.off()
 
+#### Appendice: list of species ####
+surveys_data[,only_genre:=!grepl(" ",nom_espece)]
+n_sp_biodind<-surveys_data[ident%in%plots_data_duets_info$idp  & only_genre==FALSE & tree==0&  !nom_espece%in% c("Sambucus nigra","Sambucus racemosa","Ligustrum vulgare","Crataegus monogyna","Crataegus laevigata"),]
+
+n_sp_biodind_res<-merge(n_sp_biodind,plots_data_duets_info[,c("ident","clust_studied")],by="ident")
+table_sum<-n_sp_biodind_res[!is.na(YearMeanMean),.(.N,topt=unique(YearMeanMean),pH=unique(pHopt)),by=.(nom_espece,clust_studied)]
+
+table_sum<-dcast(table_sum,nom_espece+topt+pH~clust_studied,value.var = "N")
+table_sum<-table_sum[,c(1,4,5,2,3)]
+table_sum[,Not_Forested:=ifelse(is.na(Not_Forested),0,Not_Forested)]
+table_sum[,Forested:=ifelse(is.na(Forested),0,Forested)]
+
+EurForPlant<-fread(file.path("Data","EurForPlant_melt.csv"))
+EurForPlant<-EurForPlant[biogeo_region=="France_atlantic",]
+
+
+EurForPlant<-merge(EurForPlant,sp_it_climplant[,c("species","lb_nom_final")],by="species",all.x=T)
+EurForPlant[,nom_espece:=lb_nom_final]
+EurForPlant[,lb_nom_final:=NULL]
+EurForPlant<-EurForPlant[!is.na(nom_espece),]
+
+more_than_one_sp<-EurForPlant[,.N,by=nom_espece]
+more_than_one_sp[N>1,]
+selected_sub_sp<-c("Aconitum lycoctonum L. subsp. lycoctonum","Adenostyles alliariae (Gouan) Kern.","Arabidopsis arenosa (L.) Lawalrée subsp. arenosa",
+                   "Asplenium adiantum-nigrum L. subsp. adiantum-nigrum","Carex divulsa Stokes subsp. divulsa","Carex muricata L. subsp. muricata","Centaurea phrygia subsp. pseudophrygia (C. A. Mey.) Gugler",
+                   "Cerastium fontanum Baumg. subsp. fontanum","Dactylis glomerata L. subsp. glomerata","Juniperus communis L. subsp. communis",
+                   "Lamium galeobdolon (L.) Crantz subsp. galeobdolon","Luzula sylvatica (Huds.) Gaudin subsp. sylvatica","Pinus nigra J. F. Arnold subsp. nigra",
+                   "Pyrus communis L. subsp. communis","Salix cinerea L.","Stellaria nemorum L. subsp. nemorum",
+                   "Viola canina L.","Viscum album L. subsp. album")
+EurForPlant[,more_than_one_subsp:=nom_espece%in%more_than_one_sp[N>1]$nom_espece]
+EurForPlant<-EurForPlant[more_than_one_subsp==FALSE| Scientific_name%in%selected_sub_sp,]
+EurForPlant[,forest_species:= ifelse(habitat_categ%in%c("1,1","1,2"),"Forest_species",ifelse(habitat_categ%in%c("2,1","2,2","O"),"Open_species","NC"))]
+
+
+
+table_sum_final<-merge(table_sum,EurForPlant[,c("species","habitat_categ")],all.x=T,by.x="nom_espece",by.y="species")
+table_sum_final[,topt:=round(topt,2)]
+table_sum_final
+
+write.table(table_sum_final,file.path("results_and_figures","List_of_species.csv"),
+            sep=";",row.names = F)
 
 ## end
