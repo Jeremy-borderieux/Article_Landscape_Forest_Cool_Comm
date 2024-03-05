@@ -1,5 +1,5 @@
 #### Packages ####
-for(pack in c("data.table","broman","stringr","ggplot2","ggspatial","sf","foreach","RColorBrewer","smoothr",
+for(pack in c("data.table","broman","stringr","ggplot2","ggspatial","sf","foreach","RColorBrewer","smoothr","showtext",
               "doParallel","purrr","raster","dplyr","car","sjPlot","mgcv","ggpubr","lubridate","patchwork","rcartocolor")){
   if(!pack %in%installed.packages()[,"Package"] )install.packages(pack)
   library(pack,character.only=TRUE)}
