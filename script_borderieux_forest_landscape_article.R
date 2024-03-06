@@ -875,7 +875,10 @@ selected_sub_sp<-c("Aconitum lycoctonum L. subsp. lycoctonum","Adenostyles allia
                    "Cerastium fontanum Baumg. subsp. fontanum","Dactylis glomerata L. subsp. glomerata","Juniperus communis L. subsp. communis",
                    "Lamium galeobdolon (L.) Crantz subsp. galeobdolon","Luzula sylvatica (Huds.) Gaudin subsp. sylvatica","Pinus nigra J. F. Arnold subsp. nigra",
                    "Pyrus communis L. subsp. communis","Salix cinerea L.","Stellaria nemorum L. subsp. nemorum",
-                   "Viola canina L.","Viscum album L. subsp. album")
+                   "Viola canina L.","Viscum album L. subsp. album","Dactylis glomerata L. subsp. glomerata",
+                   "Adenostyles alliariae (Gouan) Kern.","Asplenium adiantum-nigrum L. subsp. adiantum-nigrum",
+                   "Carex divulsa Stokes subsp. divulsa","Stellaria nemorum L. subsp. nemorum")
+
 EurForPlant[,more_than_one_subsp:=nom_espece%in%more_than_one_sp[N>1]$nom_espece]
 EurForPlant<-EurForPlant[more_than_one_subsp==FALSE| Scientific_name%in%selected_sub_sp,]
 EurForPlant[,forest_species:= ifelse(habitat_categ%in%c("1,1","1,2"),"Forest_species",ifelse(habitat_categ%in%c("2,1","2,2","O"),"Open_species","NC"))]
