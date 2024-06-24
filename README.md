@@ -2,6 +2,8 @@
 
 ## High landscape-scale forest cover favors cold-adapted plant communities in agriculture-forest mosaics
 
+[![DOI](https://zenodo.org/badge/485389239.svg)](https://zenodo.org/doi/10.5281/zenodo.12517792)
+
 This repo contains the raw dataset and the code used in the study "High landscape-scale forest cover favors cold-adapted plant communities in agriculture-forest mosaics" published in *GEB*
 
 **DOI:** https://doi.org/10.1111/geb.13676
